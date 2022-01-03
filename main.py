@@ -10,6 +10,7 @@
 
 from spoty import SpotifyBot
 import asyncio
+import datetime
 from twitchbot import WebSocket 
 
 async def run_requests(spot_bot, client):
@@ -17,19 +18,24 @@ async def run_requests(spot_bot, client):
 	verifies if spotify token is valid and refreshes it if it is not valid'''
 	while True:
 		while len(client.get_queue()) != 0:
-			if(spot_bot.check_validity() == False):
+			if(datetime.datetime.now() >= spot_bot.expiration):
+				print("Refreshing token...")
 				spot_bot.refresh_token()
+				print("Token refreshed!")
 			redemption = client.dequeue()
 			if(redemption[0] == 1):
 				spot_bot.next_track()
+				print("Next song!")
 			elif(redemption[0] == 2):
 				search_song = redemption[1].split(",")
-				trackId = spot_bot.search_track(search_song[0], search_song[1])
-				print("new song added {}, {}".format(search_song[0], search_song[1]))
-				try:
+				response = spot_bot.search_track(search_song[0], search_song[1])
+				if len(response["tracks"]["items"]) == 0:
+					print("Could not find {} by {}".format(search_song[0], search_song[1]))
+					continue
+				else:
+					trackId = response["tracks"]["items"][0]["uri"]
+					print("Song added to queue: {} by {}".format(search_song[0], search_song[1]))
 					spot_bot.add_to_queue(trackId)
-				except:
-					pass
 		await asyncio.sleep(5)
 
 

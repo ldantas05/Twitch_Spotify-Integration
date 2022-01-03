@@ -12,6 +12,7 @@ import json
 import requests
 import urllib.parse
 import time
+import datetime
 from secrets import spotify_username
 from refresh import Refresh
 
@@ -20,6 +21,7 @@ class SpotifyBot:
 		'''initializes "Bot" with new oauth token'''
 		self.spotify_token = ""
 		self.refresh_token()
+		self.expiration = (datetime.datetime.now() + datetime.timedelta(0, 3500))
 
 	def search_track(self, song, artist):
 		'''searches for track in spotify libary and returns Spotify Song URI, args(song=string, artist=string)'''
@@ -30,7 +32,7 @@ class SpotifyBot:
 								headers = {"Content-Type": "application/json",
 								"Authorization": "Bearer {}".format(self.spotify_token)})
 		response_json = response.json()
-		return response_json["tracks"]["items"][0]["uri"]
+		return response_json
 
 	def add_to_queue(self, track_id):
 		'''adds song to the user queue, args(track_id = string), trakc_id is Spotify Uri'''
@@ -47,24 +49,12 @@ class SpotifyBot:
 								headers= {"Content-Type":"application/json",
 								"Authorization": "Bearer {}".format(self.spotify_token)})
 
-	def check_validity(self):
-		'''checks if refresh token is valid'''
-		query = "https://api.spotify.com/v1/me/player"
-		response = requests.get(query,
-								headers = {"Content-Type": "application/json",
-								"Authorization": "Bearer {}".format(self.spotify_token)})
-		response_json = response.json()
-		try:
-			response["error"]
-			return False
-		except KeyError:
-			return True
-
 	
 	def refresh_token(self):
 		'''refreshes bearer token'''
 		refreshCaller = Refresh()
 		self.spotify_token = refreshCaller.ref_token()
+		self.expiration = (datetime.datetime.now() + datetime.timedelta(0, 3500))
 
 
 

@@ -50,7 +50,7 @@ class WebSocket:
 		self.connection = await websockets.connect(self.url)
 		nonce = uuid.uuid1().hex
 		if self.connection.open:
-			print("connected")
+			print("Connecting...")
 			data = json.dumps({
 				"type": "LISTEN",
 				"nonce": str(nonce),
@@ -60,7 +60,7 @@ class WebSocket:
 				})
 			await self.sendMessage(data)
 			resp = await self.connection.recv()
-			print(resp)
+			print("Connected!")
 			return self.connection
 
 	async def sendMessage(self, message):
@@ -73,14 +73,17 @@ class WebSocket:
 			try:
 				message = await connection.recv()
 				if "PONG" not in message:
+					print(message)
 					if "Next song" in message:
+						print("Next song request")
 						self.queue.append((1,0))
 					elif "Request a Song" in message:
 						#received message from the socket gets parsed to get the user input
 						message = json.loads(message)
 						message = json.loads(message['data']['message'])
 						message = message['data']['redemption']['user_input']
-						self.queue.append((2, message.lower()))
+						print("Song add requested "+message)
+						self.queue.append((2, message))
 				await asyncio.sleep(3)
 			except:
 				break
